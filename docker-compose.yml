@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: lims
+      POSTGRES_USER: lims
+      POSTGRES_PASSWORD: lims
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://lims:lims@db:5432/lims
+      JWT_SECRET: change-this-in-production
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  web:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
