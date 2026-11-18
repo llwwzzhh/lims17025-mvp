@@ -1,12 +1,31 @@
-# API 快速使用（开发阶段）
+# LIMS MVP backend — development status
 
-启动容器后访问 `http://localhost:8000/docs` 查看 OpenAPI。
+Run from the repository root:
 
-1. 创建管理员：`docker compose exec api python -m app.bootstrap_admin`
-2. 登录：`POST /api/auth/token`
-3. 在 Swagger 的 Authorize 中填入 `Bearer <access_token>`。
-4. 先创建客户，再创建合同并通过合同评审；合同评审通过后才能登记样品。
-5. 创建受控文件，审批文件版本后可用于试验模板；创建设备和试验模板后即可创建试验任务。
-6. 样品流转记录可通过 `/api/samples/{id}/events` 追加并查询。
+```bash
+docker compose up --build
+```
 
-本阶段 API 是早期 MVP 实现：尚未包含数据库迁移、完整状态机、数据文件存储、最终报告签发、非符合工作流程及自动化测试。请勿用于未验证的正式检测记录。
+OpenAPI: http://localhost:8000/docs
+
+Create an administrator using `docker compose exec api python -m app.bootstrap_admin`, obtain a token from `POST /api/auth/token`, then authorize in Swagger with `Bearer <token>`.
+
+## API groups currently available
+
+- Identity: `/api/auth/*`, `/api/users`
+- Customers/contracts: `/api/customers`, `/api/contracts`
+- Samples and custody events: `/api/samples`
+- Controlled documents and versions: `/api/documents`
+- Equipment: `/api/equipment`
+- Test templates/tasks: `/api/test-templates`, `/api/tasks`
+- Raw data and correction history: `/api/raw-data`
+- Technical reviews and reports: `/api/tasks/{id}/reviews`, `/api/reports`
+- Nonconformities: `/api/nonconformities`
+- System validation records: `/api/system-validations`
+- Audit query: `/api/audit-logs`
+
+Raw measurement records are retained as submitted. Corrections are stored as separate records with the previous values and reason; the API does not overwrite the original record. Approved reports are revised by creating a new version. Audit rows are application-level records and are not tamper-proof against database administrators.
+
+## Known limitations
+
+This is a development MVP, not production-ready or validated software. The current schema bootstrap uses SQLAlchemy `create_all`; reviewed database migrations, automated tests, security hardening, durable raw-file storage, report rendering/signatures, backup/restore procedures, and complete approval workflows remain necessary. The first release must be validated for the laboratory's intended use before it is relied on for controlled records. A backup endpoint is intentionally not exposed through the application; database backups should be performed by an authorized infrastructure operator with protected storage and restoration tests.
